@@ -1,6 +1,7 @@
 import Booking from '../models/Booking.js';
 import Listing from '../models/Listing.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import { sendBookingRequestEmail, sendBookingStatusEmail } from '../utils/mailer.js';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -46,6 +47,26 @@ export const createBooking = asyncHandler(async (req, res) => {
     nights,
     totalPrice: nights * listing.pricePerNight,
   });
+
+  // Non-blocking email notification to host
+  Listing.findById(listingId)
+    .populate('host', 'name email')
+    .then((popListing) => {
+      if (popListing?.host?.email) {
+        sendBookingRequestEmail({
+          to: popListing.host.email,
+          hostName: popListing.host.name,
+          guestName: req.user.name,
+          listingTitle: popListing.title,
+          checkIn: start,
+          checkOut: end,
+          nights,
+          guests,
+          totalPrice: booking.totalPrice,
+        });
+      }
+    })
+    .catch((err) => console.error('Host notification error:', err.message));
 
   res.status(201).json(booking);
 });
@@ -106,5 +127,28 @@ export const updateBookingStatus = asyncHandler(async (req, res) => {
   }
   booking.status = status;
   await booking.save();
+
+  // Non-blocking email notification to guest on status update
+  if (['confirmed', 'cancelled'].includes(status)) {
+    Booking.findById(booking._id)
+      .populate('guest', 'name email')
+      .populate('listing', 'title')
+      .then((popBooking) => {
+        if (popBooking?.guest?.email) {
+          sendBookingStatusEmail({
+            to: popBooking.guest.email,
+            guestName: popBooking.guest.name,
+            listingTitle: popBooking.listing?.title || 'Stay',
+            status,
+            checkIn: popBooking.checkIn,
+            checkOut: popBooking.checkOut,
+            nights: popBooking.nights,
+            totalPrice: popBooking.totalPrice,
+          });
+        }
+      })
+      .catch((err) => console.error('Guest notification error:', err.message));
+  }
+
   res.json(booking);
 });
