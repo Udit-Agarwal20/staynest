@@ -117,3 +117,54 @@ label { display: flex; flex-direction: column; gap: 4px; font-size: 0.9rem; colo
 .footer { text-align: center; color: var(--muted); padding: 24px; border-top: 1px solid var(--border); }
 
 /* TODO: detail-layout and search-bar break on mobile (<768px) - see "Mobile responsive" issue */
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ede8e3 25%, #f7f4f0 50%, #ede8e3 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-img {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: 0;
+}
+
+.skeleton-tag {
+  width: 60px;
+  height: 18px;
+  border-radius: 999px;
+}
+
+.skeleton-badge {
+  width: 50px;
+  height: 16px;
+}
+
+.skeleton-title {
+  width: 80%;
+  height: 20px;
+  margin: 4px 0 2px;
+}
+
+.skeleton-sub {
+  width: 55%;
+  height: 16px;
+}
+
+.skeleton-price {
+  width: 40%;
+  height: 18px;
+  margin-top: 4px;
+}
